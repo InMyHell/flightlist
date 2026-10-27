@@ -1,7 +1,8 @@
 {
   "name": "FlightList",
   "short_name": "FlightList",
-  "description": "Spoken checklist companion for MSFS 2024",
+  "description": "MSFS 2024 için sesli kontrol listesi yardımcısı",
+  "lang": "tr",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

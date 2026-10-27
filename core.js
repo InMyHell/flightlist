@@ -5,7 +5,7 @@
 
   class ChecklistParseError extends Error {
     constructor(line, message) {
-      super(`Line ${line}: ${message}`);
+      super(`Satır ${line}: ${message}`);
       this.line = line;
     }
   }
@@ -36,7 +36,7 @@
     function closePhase() {
       if (phaseTitle === null) return;
       if (!steps.some((s) => s.type === "item")) {
-        throw new ChecklistParseError(phaseLine, `Phase "${phaseTitle}" has no items`);
+        throw new ChecklistParseError(phaseLine, `"${phaseTitle}" aşamasında hiç madde yok`);
       }
       const base = (phaseEmergency ? "emg-" : "") + slug(phaseTitle);
       let id = base;
@@ -61,24 +61,24 @@
         let title = line.slice(2).trim();
         phaseEmergency = title.startsWith("!");
         if (phaseEmergency) title = title.slice(1).trim();
-        if (!title) throw new ChecklistParseError(lineNo, "Phase title is empty");
-        if (aircraft === null) throw new ChecklistParseError(lineNo, 'Phase before the "# Aircraft" line');
+        if (!title) throw new ChecklistParseError(lineNo, "Aşama başlığı boş");
+        if (aircraft === null) throw new ChecklistParseError(lineNo, 'Aşama, "# Uçak adı" satırından önce geliyor');
         phaseTitle = title;
         phaseLine = lineNo;
       } else if (line.startsWith("# ")) {
-        if (aircraft !== null) throw new ChecklistParseError(lineNo, "Second aircraft name");
+        if (aircraft !== null) throw new ChecklistParseError(lineNo, "İkinci bir uçak adı var (dosya başına bir uçak)");
         aircraft = line.slice(2).trim();
       } else if (line.startsWith("@variant")) {
         variant = line.slice("@variant".length).trim();
       } else if (line.startsWith("@match")) {
         // Sim aircraft detection isn't part of the web app.
       } else if (line.startsWith("@")) {
-        throw new ChecklistParseError(lineNo, `Unknown directive ${line.split(" ")[0]}`);
+        throw new ChecklistParseError(lineNo, `Bilinmeyen komut: ${line.split(" ")[0]}`);
       } else if (line.startsWith(">")) {
-        if (phaseTitle === null) throw new ChecklistParseError(lineNo, "Note outside a phase");
+        if (phaseTitle === null) throw new ChecklistParseError(lineNo, "Not, bir aşamanın dışında");
         steps.push({ type: "note", text: line.slice(1).trim() });
       } else {
-        if (phaseTitle === null) throw new ChecklistParseError(lineNo, "Item outside a phase");
+        if (phaseTitle === null) throw new ChecklistParseError(lineNo, "Madde, bir aşamanın dışında");
         // Split into at most 3 columns so "||" inside a sim: condition stays intact.
         const first = line.indexOf("|");
         const second = first < 0 ? -1 : line.indexOf("|", first + 1);
@@ -87,18 +87,18 @@
           : [line.slice(0, first), line.slice(first + 1, second), line.slice(second + 1)];
         const [challenge, response, extra] = cols.map((c) => c.trim());
         if (cols.length < 2 || !challenge || !response) {
-          throw new ChecklistParseError(lineNo, 'Expected "CHALLENGE | RESPONSE"');
+          throw new ChecklistParseError(lineNo, 'Beklenen biçim: "CHALLENGE | RESPONSE"');
         }
         if (extra !== undefined && !extra.toLowerCase().startsWith("sim:")) {
-          throw new ChecklistParseError(lineNo, 'Third column must start with "sim:"');
+          throw new ChecklistParseError(lineNo, 'Üçüncü sütun "sim:" ile başlamalı');
         }
         steps.push({ type: "item", id: "", challenge, response });
       }
     });
     closePhase();
 
-    if (aircraft === null) throw new ChecklistParseError(1, 'Missing "# Aircraft name" line');
-    if (!phases.length) throw new ChecklistParseError(1, 'No phases ("## Phase") found');
+    if (aircraft === null) throw new ChecklistParseError(1, '"# Uçak adı" satırı eksik');
+    if (!phases.length) throw new ChecklistParseError(1, 'Hiç aşama ("## Aşama") bulunamadı');
     return {
       id: `${aircraft}|${variant}`,
       aircraft,

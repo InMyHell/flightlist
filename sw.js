@@ -1,7 +1,7 @@
 // Offline support: the last version loaded online keeps working without a connection.
 // Bump VERSION when files are added or removed.
-const VERSION = "flightlist-v1";
-const FILES = ["./", "index.html", "styles.css", "core.js", "app.js", "checklists.js",
+const VERSION = "flightlist-v2";
+const FILES = ["./", "index.html", "styles.css", "core.js", "app.js", "checklists.js", "glossary.js",
                "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {

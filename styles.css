@@ -227,3 +227,16 @@ svg.i { width: 1em; height: 1em; flex: none; }
   .upcoming > :nth-child(n + 3) { display: none; }
   .big-btn { min-height: 64px; }
 }
+
+/* Glossary */
+.gl-search {
+  width: 100%; min-height: 48px; margin: 14px 0 4px; padding: 0 14px; border-radius: 12px;
+  background: var(--panel-raised); color: var(--text); border: 1px solid var(--line); font: inherit; font-size: 17px;
+}
+.gl-row { display: grid; grid-template-columns: minmax(120px, 38%) 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.gl-row[hidden], .gl-all .section-h[hidden] { display: none; }
+.gl-term { font-family: var(--mono); font-weight: 700; color: var(--amber); }
+.gl-mean { line-height: 1.4; }
+.gl-here { background: rgba(255, 181, 51, 0.08); border-radius: 12px; padding: 0 12px; margin-top: 8px; }
+.gl-here .gl-row:last-child { border-bottom: 0; }
+.sheet:has(.gl-all) { width: min(720px, 100%); }

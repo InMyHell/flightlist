@@ -183,7 +183,10 @@
     if (h.startsWith("#/phases/")) {
       const v = variantByID(decodeURIComponent(h.slice("#/phases/".length)));
       if (v) {
-        if (!runner || runner.variant.id !== v.id) makeRunner(v);
+        if (!runner || runner.variant.id !== v.id) {
+          makeRunner(v);
+          store.set("lastVariant", v.id);
+        }
         return { name: "phases", variant: v };
       }
     } else if (h === "#/run" && runner) {
@@ -233,13 +236,14 @@
     reset: '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 3.5v5h5"/>',
     info: '<circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="M12 11v6M12 7.3v.2" stroke="#000"/>',
     skipped: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l4 3.5-4 3.5"/>',
+    book: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/>',
   };
   const icon = (name, cls = "") =>
     `<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
 
   /// "CHALLENGE ........ RESPONSE" with a dot leader filling the gap.
   const cr = (item) =>
-    `<div class="cr"><span class="c">${esc(item.challenge)}</span><span class="leader"></span><span class="r">${esc(item.response)}</span></div>`;
+    `<div class="cr" lang="en"><span class="c">${esc(item.challenge)}</span><span class="leader"></span><span class="r">${esc(item.response)}</span></div>`;
 
   const statusIcon = (status) =>
     `<span class="status st-${status}">${icon(status === "done" ? "checkCircle" : status === "partial" ? "half" : "circle")}</span>`;
@@ -252,7 +256,7 @@
       <button class="resume" data-action="resume">
         <span class="big">${icon("play")}</span>
         <span class="grow">
-          <div class="label">RESUME FLIGHT</div>
+          <div class="label">UÇUŞA DEVAM ET</div>
           <div class="what">${esc(r.variant.aircraft)} · ${esc(r.phase.title)}</div>
           ${r.currentItem ? `<div class="item">${esc(r.currentItem.challenge)}</div>` : ""}
         </span>
@@ -268,16 +272,16 @@
           <h2>${esc(g.name)}</h2>
           <div class="variants">${g.variants.map((x) => esc(x.variant)).join(" · ")}</div>
           <div class="stats">
-            <span class="stat"><b>${v.normalPhases.length}</b><span>phases</span></span>
-            <span class="stat"><b>${items}</b><span>items</span></span>
-            ${v.emergencyPhases.length ? `<span class="stat red"><b>${v.emergencyPhases.length}</b><span>emergency</span></span>` : ""}
+            <span class="stat"><b>${v.normalPhases.length}</b><span>aşama</span></span>
+            <span class="stat"><b>${items}</b><span>madde</span></span>
+            ${v.emergencyPhases.length ? `<span class="stat red"><b>${v.emergencyPhases.length}</b><span>acil durum</span></span>` : ""}
           </div>
         </button>`;
     }).join("");
 
     const errors = library.errors.length ? `
       <div class="errors">
-        <h3>Some checklist files couldn't be read</h3>
+        <h3>Bazı kontrol listesi dosyaları okunamadı</h3>
         ${library.errors.map((e) => `<div>${esc(e)}</div>`).join("")}
       </div>` : "";
 
@@ -286,13 +290,14 @@
         <div class="header">
           <div class="grow">
             <h1 class="title">FlightList</h1>
-            <div class="subtitle">Checklist companion for MSFS 2024</div>
+            <div class="subtitle">MSFS 2024 için sesli kontrol listesi yardımcısı</div>
           </div>
-          <button class="icon-btn" data-action="import">${icon("download")}Import</button>
-          <button class="icon-btn only-icon" data-action="settings" aria-label="Settings">${icon("gear")}</button>
+          <button class="icon-btn" data-action="glossary">${icon("book")}Sözlük</button>
+          <button class="icon-btn" data-action="import">${icon("download")}İçe aktar</button>
+          <button class="icon-btn only-icon" data-action="settings" aria-label="Ayarlar">${icon("gear")}</button>
         </div>
         ${resume}
-        <div class="eyebrow">Select aircraft</div>
+        <div class="eyebrow">Uçak seçin</div>
         <div class="grid">${cards}</div>
         ${errors}
       </div>`;
@@ -312,15 +317,15 @@
           <span class="num">${String(i + 1).padStart(2, "0")}</span>
           ${statusIcon(status)}
           <span class="name">${esc(p.title)}</span>
-          ${isCurrent && status !== "done" ? '<span class="pill">CURRENT</span>' : ""}
+          ${isCurrent && status !== "done" ? '<span class="pill">ŞU AN</span>' : ""}
           <span class="grow"></span>
-          <span class="count">${p.items.length} items</span>
+          <span class="count">${p.items.length} madde</span>
           <span class="chev">${icon("chev")}</span>
         </button>`;
     }).join("");
 
     const emergencies = variant.emergencyPhases.length ? `
-      <div class="eyebrow red">Emergency procedures</div>
+      <div class="eyebrow red">Acil durum prosedürleri</div>
       <div class="emg-grid">
         ${variant.emergencyPhases.map((p) => `
           <button class="emg-btn" data-action="emergencyPhase" data-id="${esc(p.id)}">${icon("warn")}${esc(p.title)}</button>`).join("")}
@@ -328,15 +333,15 @@
 
     return `
       <div class="screen">
-        <button class="back-link" data-action="home">${icon("back")}Aircraft</button>
+        <button class="back-link" data-action="home">${icon("back")}Uçaklar</button>
         <div class="header">
           <div class="grow">
             <h1 class="title">${esc(variant.aircraft)}</h1>
             ${switcher}
           </div>
-          <button class="icon-btn" data-action="newFlight">${icon("reset")}New Flight</button>
+          <button class="icon-btn" data-action="newFlight">${icon("reset")}Yeni uçuş</button>
         </div>
-        <div class="eyebrow">Where do you want to start?</div>
+        <div class="eyebrow">Nereden başlamak istersiniz?</div>
         <div class="phase-list">${rows}</div>
         ${emergencies}
       </div>`;
@@ -346,9 +351,9 @@
     const r = runner;
     const emg = r.isInEmergency;
     const topButton = emg
-      ? `<button class="emg-top exit" data-action="exitEmergency">${icon("uturn")}Exit emergency</button>`
+      ? `<button class="emg-top exit" data-action="exitEmergency">${icon("uturn")}Acil durumdan çık</button>`
       : r.variant.emergencyPhases.length
-        ? `<button class="emg-top" data-action="emergency">${icon("warn")}EMERGENCY</button>` : "";
+        ? `<button class="emg-top" data-action="emergency">${icon("warn")}ACİL DURUM</button>` : "";
 
     let main;
     if (r.mode.kind === "running") {
@@ -364,40 +369,41 @@
           ${cr(previous)}</div>` : ""}
         ${r.currentNote ? `<div class="note-banner">${icon("info")}<span>${esc(r.currentNote)}</span></div>` : ""}
         ${item ? `<div class="current" data-key="${esc(item.id)}">
-          <div class="count">ITEM ${n} OF ${r.phase.items.length}</div>
+          <div class="count">MADDE ${n} / ${r.phase.items.length}</div>
           ${cr(item)}
-          <div class="hint">Tap anywhere to check</div>
+          <div class="hint">Onaylamak için ekranda herhangi bir yere dokunun</div>
         </div>` : ""}
         <div class="upcoming">
           ${upcoming.map((s, i) => `<div style="opacity:${1 - i * 0.2}">${s.type === "item" ? cr(s) : `<div class="note">${esc(s.text)}</div>`}</div>`).join("")}
         </div>`;
     } else if (r.mode.kind === "phaseComplete") {
       const next = r.mode.next ? r.phaseByID(r.mode.next) : null;
-      main = completeCard(`${r.phase.title} complete`, next ? `Next: ${next.title}` : "All checklists complete",
-                          next ? "Tap to continue" : null, "var(--green)");
+      main = completeCard(r.phase.title, next ? `Sıradaki: ${next.title}` : "Tüm kontrol listeleri tamamlandı",
+                          next ? "Devam etmek için dokunun" : null, "var(--green)");
     } else {
-      main = completeCard(`${r.phase.title} complete`, "Emergency procedure finished",
-                          "Tap to return to the normal checklist", "var(--red)");
+      main = completeCard(r.phase.title, "Acil durum prosedürü bitti",
+                          "Normal kontrol listesine dönmek için dokunun", "var(--red)");
     }
 
     return `
       <div class="runner ${emg ? "emergency" : ""}">
         <div class="topbar">
-          ${emg ? "" : `<button class="icon-btn only-icon" data-action="toPhases" aria-label="Phases">${icon("back")}</button>`}
+          ${emg ? "" : `<button class="icon-btn only-icon" data-action="toPhases" aria-label="Aşamalar">${icon("back")}</button>`}
           <div class="grow">
-            <div class="kicker">${emg ? "EMERGENCY PROCEDURE" : "CHECKLIST"} <span class="aircraft">· ${esc(r.variant.aircraft)}</span></div>
-            <h1>${esc(r.phase.title)}</h1>
+            <div class="kicker">${emg ? "ACİL DURUM PROSEDÜRÜ" : "KONTROL LİSTESİ"} <span class="aircraft">· ${esc(r.variant.aircraft)}</span></div>
+            <h1 lang="en">${esc(r.phase.title)}</h1>
           </div>
+          <button class="icon-btn" data-action="glossary">${icon("book")}Sözlük</button>
           ${topButton}
         </div>
         <div class="progress"><div style="width:${(r.progress * 100).toFixed(1)}%"></div></div>
-        <div class="main-area" data-action="check" role="button" aria-label="Check">${main}</div>
+        <div class="main-area" data-action="check" role="button" aria-label="Onayla">${main}</div>
         <div class="controls">
-          <button class="big-btn" data-action="back">${icon("back")}Back</button>
-          <button class="big-btn" data-action="repeat">${icon("speaker")}Repeat</button>
-          <button class="big-btn" data-action="skip">${icon("skip")}Skip</button>
-          <button class="big-btn" data-action="phaseMenu">${icon("list")}Phases</button>
-          <button class="big-btn check" data-action="check">${icon("check")}Check</button>
+          <button class="big-btn" data-action="back">${icon("back")}Geri</button>
+          <button class="big-btn" data-action="repeat">${icon("speaker")}Tekrarla</button>
+          <button class="big-btn" data-action="skip">${icon("skip")}Atla</button>
+          <button class="big-btn" data-action="phaseMenu">${icon("list")}Aşamalar</button>
+          <button class="big-btn check" data-action="check">${icon("check")}Onayla</button>
         </div>
       </div>`;
   }
@@ -406,7 +412,7 @@
     return `
       <div class="complete">
         <div class="big" style="color:${color}">${icon("checkCircle")}</div>
-        <h2>${esc(title)}</h2>
+        <h2><span lang="en">${esc(title)}</span> tamamlandı</h2>
         <div class="sub" style="color:${color}">${esc(subtitle)}</div>
         ${hint ? `<div class="hint">${esc(hint)}</div>` : ""}
       </div>`;
@@ -420,31 +426,34 @@
     switch (modal.type) {
       case "variants": {
         const g = modal.group;
-        body = `<h2>Choose checklist</h2><div class="list">
+        body = `<h2>Kontrol listesi seçin</h2><div class="list">
           ${g.variants.map((v, i) => `<button class="opt" data-action="pickVariant" data-index="${i}">
             <span class="grow">${esc(v.variant)}</span>${runner && runner.variant.id === v.id ? icon("check") : ""}</button>`).join("")}
           </div>`;
         break;
       }
       case "emergency":
-        body = `<h2>Emergency procedures</h2><div class="list">
+        body = `<h2>Acil durum prosedürleri</h2><div class="list">
           ${runner.variant.emergencyPhases.map((p) => `<button class="opt red" data-action="emergencyPhase" data-id="${esc(p.id)}">${icon("warn")}${esc(p.title)}</button>`).join("")}
           </div>`;
         break;
       case "phaseMenu":
-        body = `<h2>Jump to phase</h2><div class="list">
+        body = `<h2>Aşamaya git</h2><div class="list">
           ${runner.variant.normalPhases.map((p) => `<button class="opt" data-action="jumpPhase" data-id="${esc(p.id)}">
             ${statusIcon(runner.phaseStatus(p))}<span class="grow">${esc(p.title)}</span></button>`).join("")}
           </div>`;
         break;
       case "confirmNewFlight":
-        body = `<h2>Start a new flight?</h2><p>This clears all checked items for ${esc(runner.variant.aircraft)}.</p>
-          <div class="actions"><button class="btn" data-action="close">Cancel</button>
-          <button class="btn danger" data-action="confirmNewFlight">New Flight</button></div>`;
+        body = `<h2>Yeni uçuşa başlansın mı?</h2><p>${esc(runner.variant.aircraft)} için işaretlenen tüm maddeler silinecek.</p>
+          <div class="actions"><button class="btn" data-action="close">Vazgeç</button>
+          <button class="btn danger" data-action="confirmNewFlight">Yeni uçuş</button></div>`;
         break;
       case "message":
         body = `<h2>${esc(modal.title)}</h2><p>${esc(modal.text)}</p>
-          <div class="actions"><button class="btn primary" data-action="close">OK</button></div>`;
+          <div class="actions"><button class="btn primary" data-action="close">Tamam</button></div>`;
+        break;
+      case "glossary":
+        body = glossaryHTML();
         break;
       case "settings":
         body = settingsHTML();
@@ -453,45 +462,78 @@
     return `<div class="backdrop" data-action="backdrop"><div class="sheet" role="dialog" aria-modal="true">${body}</div></div>`;
   }
 
+  /// Glossary entries whose terms appear as whole words in `text`.
+  function glossaryMatches(text) {
+    const up = ` ${text.toUpperCase()} `;
+    return (window.GLOSSARY || []).filter((e) => e.t.split(" / ").some((term) => {
+      const pattern = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`(^|[^A-Z0-9])${pattern}([^A-Z0-9]|$)`).test(up);
+    }));
+  }
+
+  function glossaryHTML() {
+    const row = (e) => `<div class="gl-row" data-search="${esc((e.t + " " + e.m).toLocaleLowerCase("tr"))}">
+      <div class="gl-term" lang="en">${esc(e.t)}</div><div class="gl-mean">${esc(e.m)}</div></div>`;
+    let here = "";
+    if (route.name === "run" && runner) {
+      const item = runner.currentItem;
+      const text = [item?.challenge, item?.response, runner.currentNote].filter(Boolean).join(" ");
+      const found = text ? glossaryMatches(text) : [];
+      if (found.length) {
+        here = `<div class="section-h">Bu maddede</div><div class="gl-here">${found.map(row).join("")}</div>`;
+      }
+    }
+    const groups = [...new Set((window.GLOSSARY || []).map((e) => e.g))];
+    return `
+      <h2>Havacılık sözlüğü</h2>
+      <p class="small">Kontrol listeleri, gerçek kokpitte olduğu gibi İngilizce kalır. Burada anlamlarını bulabilirsiniz.</p>
+      ${here}
+      <input class="gl-search" type="search" placeholder="Ara (ör. flaps, park freni)" aria-label="Sözlükte ara">
+      <div class="gl-all">
+        ${groups.map((g) => `<div class="section-h">${esc(g)}</div>${window.GLOSSARY.filter((e) => e.g === g).map(row).join("")}`).join("")}
+      </div>
+      <div class="actions"><button class="btn primary" data-action="close">Kapat</button></div>`;
+  }
+
   function settingsHTML() {
     const voices = speaker.voices();
     const imported = store.get("imported", []);
     const wakeSupported = "wakeLock" in navigator && window.isSecureContext;
     return `
-      <h2>Settings</h2>
-      <div class="section-h">Speech</div>
-      <div class="field"><label class="toggle">Read checklist aloud
+      <h2>Ayarlar</h2>
+      <div class="section-h">Ses</div>
+      <div class="field"><label class="toggle">Kontrol listesini sesli oku
         <input type="checkbox" data-setting="speak" ${settings.speak ? "checked" : ""}></label></div>
       <div class="field">
-        <label for="voice">Voice</label>
+        <label for="voice">Okuyucu ses (İngilizce)</label>
         <select id="voice" data-setting="voiceURI">
-          <option value="">Automatic (best available)</option>
-          ${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === settings.voiceURI ? "selected" : ""}>${esc(v.name)} · ${esc(v.lang)}${v.localService ? "" : " · online"}</option>`).join("")}
+          <option value="">Otomatik (en iyi ses)</option>
+          ${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === settings.voiceURI ? "selected" : ""}>${esc(v.name)} · ${esc(v.lang)}${v.localService ? "" : " · internet gerekir"}</option>`).join("")}
         </select>
-        ${speaker.synth ? "" : '<div class="small">This browser has no speech engine.</div>'}
-        <div class="small">On Android, more voices come from Settings → General management → Text-to-speech (Google Speech Services → Install voice data).</div>
+        ${speaker.synth ? "" : '<div class="small">Bu tarayıcıda konuşma motoru yok.</div>'}
+        <div class="small">Daha doğal sesler için Android Ayarlar’da “Metin okuma” (Text-to-speech) bölümünü açın, Google Konuşma Hizmetleri’nde İngilizce ses verisini yükleyin ve burada seçin.</div>
       </div>
       <div class="field">
-        <label for="rate">Speaking rate · ${settings.rate.toFixed(2)}×</label>
+        <label for="rate">Konuşma hızı · ${settings.rate.toFixed(2)}×</label>
         <input id="rate" type="range" min="0.7" max="1.5" step="0.05" value="${settings.rate}" data-setting="rate">
       </div>
-      <div class="field"><label class="toggle">Read the response too (e.g. “Flaps — up”)
+      <div class="field"><label class="toggle">Cevabı da oku (ör. “Flaps — up”)
         <input type="checkbox" data-setting="readResponse" ${settings.readResponse ? "checked" : ""}></label></div>
-      <div class="field"><button class="btn" data-action="testVoice">${"Test voice"}</button></div>
+      <div class="field"><button class="btn" data-action="testVoice">Sesi dene</button></div>
 
-      <div class="section-h">Display</div>
-      <div class="field"><label class="toggle">Keep screen awake during checklists
+      <div class="section-h">Ekran</div>
+      <div class="field"><label class="toggle">Kontrol listesi açıkken ekranı açık tut
         <input type="checkbox" data-setting="keepAwake" ${settings.keepAwake ? "checked" : ""}></label>
-        ${wakeSupported ? "" : '<div class="small">Needs the app to be opened over HTTPS (or installed from an HTTPS address).</div>'}
+        ${wakeSupported ? "" : '<div class="small">Uygulamanın HTTPS adresinden açılması (veya yüklenmesi) gerekir.</div>'}
       </div>
 
-      <div class="section-h">Imported checklists</div>
+      <div class="section-h">İçe aktarılan kontrol listeleri</div>
       ${imported.length ? imported.map((f, i) => `
         <div class="imported"><div class="grow"><div class="file">${esc(f.name)}</div></div>
-          <button class="btn" data-action="deleteImported" data-index="${i}">Delete</button></div>`).join("")
-        : '<div class="small">None yet.</div>'}
-      <div class="small">Use Import on the start screen to add .checklist files. A file with the same aircraft and @variant as a built-in one replaces it.</div>
-      <div class="actions"><button class="btn primary" data-action="close">Done</button></div>`;
+          <button class="btn" data-action="deleteImported" data-index="${i}">Sil</button></div>`).join("")
+        : '<div class="small">Henüz yok.</div>'}
+      <div class="small">.checklist dosyası eklemek için başlangıç ekranındaki “İçe aktar” düğmesini kullanın. Aynı uçak ve @variant adına sahip bir dosya, yerleşik listenin yerine geçer.</div>
+      <div class="actions"><button class="btn primary" data-action="close">Bitti</button></div>`;
   }
 
   // MARK: - Render + events
@@ -558,6 +600,7 @@
         command(action);
         break;
       case "settings": openModal({ type: "settings" }); break;
+      case "glossary": openModal({ type: "glossary" }); break;
       case "testVoice": speaker.stop(); speaker.say("Landing gear. Down, three green."); break;
       case "deleteImported": {
         const list = store.get("imported", []);
@@ -584,8 +627,15 @@
     render();
   });
   modalEl.addEventListener("input", (e) => {
+    if (e.target.classList.contains("gl-search")) {
+      const q = e.target.value.trim().toLocaleLowerCase("tr");
+      const all = modalEl.querySelector(".gl-all");
+      all.querySelectorAll(".gl-row").forEach((r) => { r.hidden = q && !r.dataset.search.includes(q); });
+      all.querySelectorAll(".section-h").forEach((h) => { h.hidden = !!q; });
+      return;
+    }
     if (e.target.dataset.setting === "rate") {
-      e.target.previousElementSibling.textContent = `Speaking rate · ${parseFloat(e.target.value).toFixed(2)}×`;
+      e.target.previousElementSibling.textContent = `Konuşma hızı · ${parseFloat(e.target.value).toFixed(2)}×`;
     }
   });
 
@@ -623,9 +673,9 @@
       list.push({ name: file.name, text });
       store.set("imported", list);
       reloadLibrary();
-      openModal({ type: "message", title: "Imported", text: `${v.aircraft} — ${v.variant} (${v.phases.length} phases)` });
+      openModal({ type: "message", title: "İçe aktarıldı", text: `${v.aircraft} — ${v.variant} (${v.phases.length} aşama)` });
     } catch (err) {
-      openModal({ type: "message", title: "Couldn't import", text: err.message });
+      openModal({ type: "message", title: "İçe aktarılamadı", text: err.message });
     }
   });
 
